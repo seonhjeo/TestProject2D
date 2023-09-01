@@ -21,7 +21,7 @@ public class Test : MonoBehaviour
         _dic.Add(1, "Hello");
         _dic.Add(2, "World");
         
-        var data = new SaveData(1, "MemoryPack Test String", _dic);
+        var data = new SaveData(1, "MemoryPack Test String", _dic, new Vector3(1.5f, 3.7f, -220.4f));
         
         // 직렬화 함수
         var serialized = MemoryPackSerializer.Serialize(data);
@@ -30,10 +30,13 @@ public class Test : MonoBehaviour
 
         Debug.Log($"Id={deserialized.Id}, Message={deserialized.Message}");
         
+        // 직렬화된 데이터 저장 및 불러오기
         CreateOrSaveJsonFile(Application.persistentDataPath, "SaveData", serialized);
         _res = LoadJsonFile<SaveData>(Application.persistentDataPath, "SaveData");
+        
         Debug.Log($"Id={_res.Id}, Message={_res.Message}");
         Debug.Log($"Value1={_res.KeyValue[1]}, Value2={_res.KeyValue[2]}");
+        Debug.Log(_res.VectorData.ToString());
 
         text1.text = $"Id={_res.Id}, Message={_res.Message}";
         text2.text = $"Value1={_res.KeyValue[1]}, Value2={_res.KeyValue[2]}";

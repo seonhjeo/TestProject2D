@@ -1,6 +1,7 @@
 using MemoryPack;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
 /// 저장 데이터
@@ -25,6 +26,9 @@ public partial class SaveData
 
     [MemoryPackOrder(2)]
     public Dictionary<int, string> KeyValue { get; protected set; } = null;
+    
+    [MemoryPackOrder(3)]
+    public Vector3 VectorData { get; protected set; } = default;
 
     /// <summary>
     /// 빈 데이터 플래그
@@ -37,10 +41,11 @@ public partial class SaveData
     }
 
     [MemoryPackConstructor]
-    public SaveData(int id, string message, Dictionary<int, string> keyValue)
+    public SaveData(int id, string message, Dictionary<int, string> keyValue, Vector3 vectorData)
     {
         this.Id = id;
         this.Message = message;
         KeyValue = keyValue;
+        VectorData = vectorData;
     }
 }
