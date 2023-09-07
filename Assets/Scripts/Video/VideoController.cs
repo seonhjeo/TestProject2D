@@ -1,4 +1,5 @@
 
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,13 +7,18 @@ using UnityEngine.Video;
 
 public class VideoController : MonoBehaviour
 {
+    [Header("Audio Source")]
     [SerializeField] private AudioSource audioSource;
     
+    [Header("Video Player")]
     [SerializeField] private VideoPlayer videoPlayer;
+    [Header("Video Play Target")]
     [SerializeField] private RawImage rawImage;
 
+    [Header("Resolution Textures")]
     [SerializeField] private RenderTexture[] renderTextures;
 
+    [Header("Control Parts")]
     [SerializeField] private Button startPauseButton;
     [SerializeField] private Slider speedSlider;
     [SerializeField] private Slider volumeSlider;
@@ -21,61 +27,94 @@ public class VideoController : MonoBehaviour
     [SerializeField] private Slider videoSlider;
 
 
-    private bool _isPlaying;
-    private float _currentSpeed;
-    private bool _loop;
-    
+    // private bool _isPlaying;
+    // private float _currentSpeed;
+    // private bool _loop;
+
+    #region Unity Methods
+
     private void Start()
     {
+        // add event to parts
+        startPauseButton.onClick.AddListener(PlayPause);
+        speedSlider.onValueChanged.AddListener(SetVideoSpeed);
+        volumeSlider.onValueChanged.AddListener(SetVideoVolume);
+
+        List<string> temp = new List<string>();
+        foreach (var v in renderTextures)
+        {
+            temp.Add(v.name);
+        }
+        resolutionDropDown.AddOptions(temp);
+        temp.Clear();
+        resolutionDropDown.onValueChanged.AddListener(SetResolution);
+        
+        loopToggle.onValueChanged.AddListener(SetLoop);
+        videoSlider.onValueChanged.AddListener(SetPlayTime);
+        
+        
+        // Set VideoPlayer default values
         videoPlayer.SetTargetAudioSource(0, audioSource);
-        
         volumeSlider.value = videoPlayer.GetDirectAudioVolume(0);
-        _currentSpeed = 1f;
-        speedSlider.value = _currentSpeed;
         
+        SetVideoSpeed(1f);
         SetVideoVolume(1f);
-        volumeSlider.value = 1f;
+        SetLoop(false);
         
-        _loop = false;
-        videoPlayer.isLooping = _loop;
-        loopToggle.isOn = _loop;
-        
-        _isPlaying = true;
-        videoPlayer.Play();
+        videoPlayer.Prepare();
     }
 
     private void Update()
     {
-        videoSlider.value = (float)(videoPlayer.time / videoPlayer.length);
+        videoSlider.SetValueWithoutNotify((float)(videoPlayer.time / videoPlayer.length));
     }
+
+    private void OnDestroy()
+    {
+        startPauseButton.onClick.RemoveAllListeners();
+        speedSlider.onValueChanged.RemoveAllListeners();
+        volumeSlider.onValueChanged.RemoveAllListeners();
+        
+        resolutionDropDown.ClearOptions();
+        resolutionDropDown.onValueChanged.RemoveAllListeners();
+        
+        loopToggle.onValueChanged.RemoveAllListeners();
+        videoSlider.onValueChanged.RemoveAllListeners();
+    }
+
+    #endregion
+    
+    
 
 
     public void PlayPause()
     {
-        if (_isPlaying)
+        if (videoPlayer.isPlaying)
         {
-            videoPlayer.playbackSpeed = 0f;
-            _isPlaying = false;
+            videoPlayer.Pause();
         }
         else
         {
-            videoPlayer.playbackSpeed = _currentSpeed;
-            _isPlaying = true;
+            if (!videoPlayer.isPrepared)
+            {
+                videoPlayer.Prepare();
+                return;
+            }
+            videoPlayer.Play();
         }
     }
 
     public void SetVideoVolume(float value)
     {
         videoPlayer.SetDirectAudioVolume(0, value);
+        volumeSlider.SetValueWithoutNotify(value);
     }
 
     public void SetVideoSpeed(float value)
     {
-        _currentSpeed = value;
-        if (_isPlaying)
-        {
-            videoPlayer.playbackSpeed = _currentSpeed;
-        }
+        videoPlayer.playbackSpeed = value;
+        speedSlider.SetValueWithoutNotify(value);
+        
     }
 
     public void SetResolution(int value)
@@ -101,19 +140,13 @@ public class VideoController : MonoBehaviour
 
     public void SetLoop(bool value)
     {
-        Debug.Log(value.ToString());
-        _loop = value;
-        videoPlayer.isLooping = _loop;
+        videoPlayer.isLooping = value;
+        loopToggle.isOn = value;
     }
 
     public void SetPlayTime(float time)
     {
-        videoPlayer.Pause();
-        videoPlayer.playbackSpeed = 0f;
-        
-        videoPlayer.time = videoPlayer.length * time;
-
-        videoPlayer.playbackSpeed = _currentSpeed;
-        videoPlayer.Play();
+        var duration = videoPlayer.frameCount / (ulong)videoPlayer.frameRate;
+        videoPlayer.time = time * duration;
     }
 }
